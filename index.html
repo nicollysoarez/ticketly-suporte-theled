@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Chamados - TomTicket Style</title>
+    <!-- Tailwind CSS para estilização rápida e otimizada -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Supabase JS Client para persistência na nuvem sem framework -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 min-p-4">
+
+    <div class="max-w-3xl mx-auto p-4 md:p-8">
+        <!-- Cabeçalho -->
+        <header class="flex flex-col sm:flex-row justify-between items-center border-b pb-4 mb-6 gap-4">
+            <h1 class="text-xl font-bold text-blue-600">Suporte Técnico - Chamados</h1>
+            <div class="flex gap-2">
+                <button onclick="switchTab('abrir')" id="btn-abrir" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium transition">Novo Chamado</button>
+                <button onclick="switchTab('buscar')" id="btn-buscar" class="px-4 py-2 bg-white text-slate-600 border rounded-lg text-sm font-medium transition">Acompanhar</button>
+            </div>
+        </header>
+
+        <!-- Aba: Abrir Chamado -->
+        <div id="tab-abrir" class="bg-white p-6 rounded-xl shadow-sm border space-y-4">
+            <h2 class="text-lg font-semibold border-b pb-2">Abrir Novo Chamado</h2>
+            <form id="form-chamado" onsubmit="criarChamado(event)" class="space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Nome do Cliente</label>
+                        <input type="text" id="cliente" required class="w-full p-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Projeto</label>
+                        <input type="text" id="projeto" required class="w-full p-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Endereço do Projeto</label>
+                    <input type="text" id="endereco" required class="w-full p-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Nome do Técnico</label>
+                        <input type="text" id="tecnico_nome" required class="w-full p-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Telefone do Técnico</label>
+                        <input type="text" id="tecnico_telefone" required placeholder="(00) 00000-0000" class="w-full p-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Descrição do Problema</label>
+                    <textarea id="descricao" rows="3" required class="w-full p-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+                </div>
+
+                <div class="border-t pt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">O que foi resolvido (Opcional)</label>
+                        <input type="text" id="o_que_foi_resolvido" class="w-full p-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Data da Resolução</label>
+                        <input type="date" id="data_resolucao" class="w-full p-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium p-2.5 rounded-lg transition text-sm">Cadastrar Chamado</button>
+            </form>
+        </div>
+
+        <!-- Aba: Acompanhar Chamado -->
+        <div id="tab-buscar" class="hidden space-y-4">
+            <div class="bg-white p-6 rounded-xl shadow-sm border flex gap-2">
+                <input type="number" id="busca_codigo" placeholder="Digite o número do chamado..." class="flex-1 p-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                <button onclick="buscarChamado()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 rounded-lg text-sm font-medium transition">Buscar</button>
+            </div>
+
+            <div id="resultado-busca" class="space-y-4"></div>
+        </div>
+    </div>
+
+    <script>
+        // Configuração do Supabase (Insira suas chaves públicas ou variáveis)
+        const SUPABASE_URL = 'SUA_URL_DO_SUPABASE';
+        const SUPABASE_ANON_KEY = 'SUA_CHAVE_ANON_DO_SUPABASE';
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        function switchTab(tab) {
+            if (tab === 'abrir') {
+                document.getElementById('tab-abrir').classList.remove('hidden');
+                document.getElementById('tab-buscar').classList.add('hidden');
+                document.getElementById('btn-abrir').className = 'px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium transition';
+                document.getElementById('btn-buscar').className = 'px-4 py-2 bg-white text-slate-600 border rounded-lg text-sm font-medium transition';
+            } else {
+                document.getElementById('tab-abrir').classList.add('hidden');
+                document.getElementById('tab-buscar').classList.remove('hidden');
+                document.getElementById('btn-buscar').className = 'px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium transition';
+                document.getElementById('btn-abrir').className = 'px-4 py-2 bg-white text-slate-600 border rounded-lg text-sm font-medium transition';
+            }
+        }
+
+        async function criarChamado(e) {
+            e.preventDefault();
+            const payload = {
+                cliente_nome: document.getElementById('cliente').value,
+                projeto: document.getElementById('projeto').value,
+                endereco: document.getElementById('endereco').value,
+                tecnico_nome: document.getElementById('tecnico_nome').value,
+                tecnico_telefone: document.getElementById('tecnico_telefone').value,
+                descricao_problema: document.getElementById('descricao').value,
+                o_que_foi_resolvido: document.getElementById('o_que_foi_resolvido').value || null,
+                data_resolucao: document.getElementById('data_resolucao').value || null,
+                status: document.getElementById('o_que_foi_resolvido').value ? 'Concluído' : 'Pendente'
+            };
+
+            const { data, error } = await _supabase.from('tickets').insert([payload]).select();
+
+            if (error) {
+                alert('Erro ao salvar: ' + error.message);
+            } else {
+                alert(`Chamado criado com sucesso! Código: #${data[0].codigo}`);
+                document.getElementById('form-chamado').reset();
+            }
+        }
+
+        async function buscarChamado() {
+            const codigo = document.getElementById('busca_codigo').value;
+            if (!codigo) return;
+
+            const { data, error } = await _supabase.from('tickets').select('*').eq('codigo', codigo);
+            const container = document.getElementById('resultado-busca');
+            container.innerHTML = '';
+
+            if (error || data.length === 0) {
+                container.innerHTML = '<div class="bg-white p-4 rounded-xl text-center text-slate-500 border text-sm">Nenhum chamado encontrado com este código.</div>';
+                return;
+            }
+
+            data.forEach(t => {
+                container.innerHTML += `
+                    <div class="bg-white p-6 rounded-xl shadow-sm border space-y-3 text-sm">
+                        <div class="flex justify-between items-center border-b pb-2">
+                            <span class="font-bold text-blue-600">Chamado #${t.codigo}</span>
+                            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold ${t.status === 'Concluído' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}">${t.status}</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div><strong class="text-slate-500">Cliente:</strong> ${t.cliente_nome}</div>
+                            <div><strong class="text-slate-500">Projeto:</strong> ${t.projeto}</div>
+                            <div class="col-span-2"><strong class="text-slate-500">Endereço:</strong> ${t.endereco}</div>
+                            <div><strong class="text-slate-500">Técnico:</strong> ${t.tecnico_nome} (${t.tecnico_telefone})</div>
+                            <div><strong class="text-slate-500">Resolução:</strong> ${t.data_resolucao || 'Pendente'}</div>
+                        </div>
+                        <div class="bg-slate-50 p-2.5 rounded border">
+                            <p class="text-xs font-semibold text-slate-500">PROBLEMA:</p>
+                            <p>${t.descricao_problema}</p>
+                        </div>
+                        ${t.o_que_foi_resolvido ? `
+                        <div class="bg-green-50 p-2.5 rounded border border-green-200">
+                            <p class="text-xs font-semibold text-green-700">SOLUÇÃO:</p>
+                            <p class="text-green-900">${t.o_que_foi_resolvido}</p>
+                        </div>` : ''}
+                    </div>
+                `;
+            });
+        }
+    </script>
+</body>
+</html>
