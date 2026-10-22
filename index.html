@@ -7,9 +7,7 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        tailwind.config = {
-            darkMode: 'class',
-        }
+        tailwind.config = { darkMode: 'class' }
     </script>
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -24,7 +22,6 @@
         <!-- Cabeçalho -->
         <header class="flex flex-col sm:flex-row justify-between items-center border-b border-zinc-800 pb-4 mb-6 gap-4">
             <div class="flex items-center gap-3">
-                <!-- Logotipo Estilizado The LED -->
                 <div class="flex gap-1 h-6 items-center">
                     <div class="w-2 h-full bg-gradient-to-t from-orange-500 to-amber-400 rounded-sm"></div>
                     <div class="w-2 h-full bg-purple-600 rounded-sm"></div>
@@ -40,11 +37,7 @@
                 <button onclick="switchTab('abrir')" id="btn-abrir" class="px-3 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg text-sm font-medium transition shadow-lg shadow-purple-900/20">Novo Chamado</button>
                 <button onclick="switchTab('buscar')" id="btn-buscar" class="px-3 py-2 bg-zinc-900 text-zinc-300 border border-zinc-800 rounded-lg text-sm font-medium transition hover:bg-zinc-800">Acompanhar</button>
                 <button onclick="switchTab('dashboard')" id="btn-dashboard" class="px-3 py-2 bg-zinc-900 text-zinc-300 border border-zinc-800 rounded-lg text-sm font-medium transition hover:bg-zinc-800">Dashboard</button>
-                
-                <!-- Botão Tema Dark/Light -->
-                <button onclick="toggleTheme()" class="p-2 bg-zinc-900 text-zinc-300 border border-zinc-800 rounded-lg text-sm transition hover:bg-zinc-800" title="Alternar Tema">
-                    🌙/☀️
-                </button>
+                <button onclick="toggleTheme()" class="p-2 bg-zinc-900 text-zinc-300 border border-zinc-800 rounded-lg text-sm transition hover:bg-zinc-800" title="Alternar Tema">🌙/☀️</button>
             </div>
         </header>
 
@@ -142,7 +135,6 @@
                 <input type="number" id="busca_codigo" placeholder="Digite o número do chamado..." class="flex-1 p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:ring-2 focus:ring-purple-500 outline-none">
                 <button onclick="buscarChamado()" class="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-5 rounded-lg text-sm font-medium transition">Buscar</button>
             </div>
-
             <div id="resultado-busca" class="space-y-4"></div>
         </div>
 
@@ -159,7 +151,6 @@
     </div>
 
     <script>
-        // Configuração do Supabase
         const SUPABASE_URL = 'https://qwejshilmvijckxsyyc.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF3ZWpzaGlsbXZpamNreHFzeXljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI2NzkxNzIsImV4cCI6MjEwODI1NTE3Mn0.ZK5y9lvJgZEvlECF1tpBHFBMpFEfO3vdfWDmxGqNlt4';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -169,7 +160,6 @@
         let audioBlob = null;
         let chartInstance = null;
 
-        // Alternar Tema Escuro / Claro
         function toggleTheme() {
             const html = document.documentElement;
             if (html.classList.contains('dark')) {
@@ -192,7 +182,6 @@
             if (tab === 'dashboard') carregarDashboard();
         }
 
-        // Gravação de Áudio Opcional
         async function iniciarGravacao() {
             audioChunks = [];
             try {
@@ -236,9 +225,8 @@
                 let printUrl = null;
                 let audioUrl = null;
 
-                // Upload de Print (se houver)
                 const fileInput = document.getElementById('arquivo_print');
-                if (fileInput.files.length > 0) {
+                if (fileInput && fileInput.files.length > 0) {
                     const file = fileInput.files[0];
                     const fileName = `print_${Date.now()}_${file.name}`;
                     const { error: fileError } = await _supabase.storage.from('evidencias').upload(fileName, file);
@@ -248,7 +236,6 @@
                     }
                 }
 
-                // Upload de Áudio (se houver)
                 if (audioBlob) {
                     const audioName = `audio_${Date.now()}.webm`;
                     const { error: audioError } = await _supabase.storage.from('evidencias').upload(audioName, audioBlob);
@@ -259,6 +246,8 @@
                 }
 
                 const resolvido = document.getElementById('o_que_foi_resolvido').value;
+                const dataRes = document.getElementById('data_resolucao').value;
+
                 const payload = {
                     cliente_nome: document.getElementById('cliente').value,
                     projeto: document.getElementById('projeto').value,
@@ -269,7 +258,7 @@
                     descricao_problema: document.getElementById('descricao').value,
                     o_que_foi_resolvido: resolvido || null,
                     impedimento: document.getElementById('impedimento').value || null,
-                    data_resolucao: document.getElementById('data_resolucao').value || null,
+                    data_resolucao: dataRes ? dataRes : null,
                     status: resolvido ? 'Concluído' : 'Pendente',
                     print_url: printUrl,
                     audio_url: audioUrl
@@ -277,13 +266,17 @@
 
                 const { data, error } = await _supabase.from('tickets').insert([payload]).select();
 
-                if (error) {
-                    throw error;
+                if (error) throw error;
+
+                if (data && data.length > 0) {
+                    alert(`Chamado criado com sucesso! Código do Chamado: #${data[0].codigo}`);
+                } else {
+                    alert('Chamado criado com sucesso!');
                 }
 
-                alert(`Chamado criado com sucesso! Código do Chamado: #${data[0].codigo}`);
                 document.getElementById('form-chamado').reset();
-                document.getElementById('audio-preview').classList.add('hidden');
+                const audioPreview = document.getElementById('audio-preview');
+                if (audioPreview) audioPreview.classList.add('hidden');
                 audioBlob = null;
                 document.getElementById('status-gravacao').innerText = 'Opcional';
 
@@ -323,6 +316,7 @@
                             <div><strong class="text-zinc-400">Endereço:</strong> ${t.endereco}</div>
                             <div><strong class="text-zinc-400">Técnico:</strong> ${t.tecnico_nome} (${t.tecnico_telefone})</div>
                             <div><strong class="text-zinc-400">Incidência:</strong> <span class="text-pink-400 font-semibold">${t.incidencia}</span></div>
+                            <div><strong class="text-zinc-400">Data Resolução:</strong> ${t.data_resolucao || 'Não informada'}</div>
                         </div>
                         <div class="bg-zinc-950 p-3 rounded border border-zinc-800">
                             <p class="text-xs font-semibold text-zinc-400">DESCRIÇÃO INICIAL:</p>
