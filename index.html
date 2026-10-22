@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>THE LED - Suporte Técnico & Auditoria</title>
+    <title>THE LED - Suporte Técnico & Auditoria com SLA</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -27,7 +27,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-black tracking-wider text-white">THE <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">LED</span></h1>
-                    <p class="text-xs text-zinc-400">Suporte Técnico & Gestão de Chamados (Modo Direto)</p>
+                    <p class="text-xs text-zinc-400">Suporte Técnico, SLA & Notificação por E-mail</p>
                 </div>
             </div>
             
@@ -41,7 +41,7 @@
 
         <!-- Aba: Abrir Chamado -->
         <div id="tab-abrir" class="bg-zinc-900 p-6 rounded-xl shadow-xl border border-zinc-800 space-y-4">
-            <h2 class="text-lg font-semibold border-b border-zinc-800 pb-2 text-zinc-200">Abertura e Registro Técnico</h2>
+            <h2 class="text-lg font-semibold border-b border-zinc-800 pb-2 text-zinc-200">Abertura e Registro Técnico com SLA</h2>
             <form id="form-chamado" onsubmit="criarChamado(event)" class="space-y-4">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -49,14 +49,20 @@
                         <input type="text" id="cliente" required class="w-full p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:ring-2 focus:ring-purple-500 outline-none">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold uppercase text-zinc-400 mb-1">Projeto</label>
-                        <input type="text" id="projeto" required class="w-full p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:ring-2 focus:ring-purple-500 outline-none">
+                        <label class="block text-xs font-semibold uppercase text-zinc-400 mb-1">E-mail Corporativo do Cliente</label>
+                        <input type="email" id="email_cliente" required placeholder="cliente@empresa.com.br" class="w-full p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:ring-2 focus:ring-purple-500 outline-none">
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-xs font-semibold uppercase text-zinc-400 mb-1">Endereço do Projeto</label>
-                    <input type="text" id="endereco" required class="w-full p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:ring-2 focus:ring-purple-500 outline-none">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-zinc-400 mb-1">Projeto</label>
+                        <input type="text" id="projeto" required class="w-full p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:ring-2 focus:ring-purple-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-zinc-400 mb-1">Endereço do Projeto</label>
+                        <input type="text" id="endereco" required class="w-full p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:ring-2 focus:ring-purple-500 outline-none">
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -71,17 +77,27 @@
                 </div>
 
                 <div class="border-t border-zinc-800 pt-4 space-y-4">
-                    <div>
-                        <label class="block text-xs font-semibold uppercase text-zinc-400 mb-1">Incidência (Causa Raiz do Problema)</label>
-                        <select id="incidencia" required class="w-full p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:ring-2 focus:ring-purple-500 outline-none">
-                            <option value="">Selecione a incidência principal...</option>
-                            <option value="Falha de Hardware / Painel LED">Falha de Hardware / Painel LED</option>
-                            <option value="Problema de Cabeamento / Fibra">Problema de Cabeamento / Fibra</option>
-                            <option value="Configuração de Software / Processador de Vídeo">Configuração de Software / Processador de Vídeo</option>
-                            <option value="Oscilação / Falta de Energia">Oscilação / Falta de Energia</option>
-                            <option value="Dano Provocado por Terceiros">Dano Provocado por Terceiros</option>
-                            <option value="Outros">Outros</option>
-                        </select>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-zinc-400 mb-1">Incidência (Causa Raiz)</label>
+                            <select id="incidencia" required class="w-full p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:ring-2 focus:ring-purple-500 outline-none">
+                                <option value="">Selecione a incidência...</option>
+                                <option value="Falha de Hardware / Painel LED">Falha de Hardware / Painel LED</option>
+                                <option value="Problema de Cabeamento / Fibra">Problema de Cabeamento / Fibra</option>
+                                <option value="Configuração de Software / Processador">Configuração de Software / Processador</option>
+                                <option value="Oscilação / Falta de Energia">Oscilação / Falta de Energia</option>
+                                <option value="Dano Provocado por Terceiros">Dano Provocado por Terceiros</option>
+                                <option value="Outros">Outros</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-zinc-400 mb-1">Nível de Urgência (SLA)</label>
+                            <select id="sla_nivel" required class="w-full p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:ring-2 focus:ring-purple-500 outline-none">
+                                <option value="Verde">🟢 Normal - Dentro do Prazo (48h)</option>
+                                <option value="Amarelo">🟡 Médio - Atenção (24h)</option>
+                                <option value="Vermelho">🔴 Urgente - Finalizar Imediatamente (4h)</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div>
@@ -95,8 +111,8 @@
                             <textarea id="o_que_foi_resolvido" rows="2" class="w-full p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:ring-2 focus:ring-purple-500 outline-none" placeholder="Ações tomadas em campo..."></textarea>
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold uppercase text-zinc-400 mb-1">O que impediu de solucionar (Se aplicável)</label>
-                            <textarea id="impedimento" rows="2" class="w-full p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:ring-2 focus:ring-purple-500 outline-none" placeholder="Ex: Falta de acesso ao local, peça pendente..."></textarea>
+                            <label class="block text-xs font-semibold uppercase text-zinc-400 mb-1">Impedimentos (Se houver)</label>
+                            <textarea id="impedimento" rows="2" class="w-full p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:ring-2 focus:ring-purple-500 outline-none" placeholder="Ex: Peça pendente, sem acesso ao local..."></textarea>
                         </div>
                     </div>
 
@@ -106,13 +122,13 @@
                             <input type="date" id="data_resolucao" class="w-full p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:ring-2 focus:ring-purple-500 outline-none">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold uppercase text-zinc-400 mb-1">Anexar Print / Foto de Evidência (Opcional)</label>
+                            <label class="block text-xs font-semibold uppercase text-zinc-400 mb-1">Anexar Print de Evidência (Opcional)</label>
                             <input type="file" id="arquivo_print" accept="image/*" class="w-full p-2 bg-zinc-950 border border-zinc-800 rounded-lg text-xs text-zinc-400 file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-purple-950 file:text-purple-300 hover:file:bg-purple-900">
                         </div>
                     </div>
                 </div>
 
-                <button type="submit" id="btn-enviar" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 text-white font-medium p-2.5 rounded-lg transition text-sm shadow-lg shadow-purple-900/20">Cadastrar e Salvar Chamado</button>
+                <button type="submit" id="btn-enviar" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 text-white font-medium p-2.5 rounded-lg transition text-sm shadow-lg shadow-purple-900/20">Cadastrar Chamado e Enviar Notificação</button>
             </form>
         </div>
 
@@ -128,8 +144,8 @@
         <!-- Aba: Dashboard de Recorrência -->
         <div id="tab-dashboard" class="hidden space-y-4">
             <div class="bg-zinc-900 p-6 rounded-xl shadow-xl border border-zinc-800 space-y-4">
-                <h3 class="text-base font-bold text-zinc-100">Incidências Mais Recorrentes</h3>
-                <p class="text-xs text-zinc-400">Visão geral estatística para apresentação à chefia.</p>
+                <h3 class="text-base font-bold text-zinc-100">Incidências & Status de SLA</h3>
+                <p class="text-xs text-zinc-400">Visão geral estatística de chamados e prioridades de atendimento.</p>
                 <div class="w-full h-64 flex justify-center items-center">
                     <canvas id="graficoIncidencias"></canvas>
                 </div>
@@ -171,14 +187,29 @@
             localStorage.setItem('theled_chamados', JSON.stringify(lista));
         }
 
+        function enviarEmailCliente(chamado) {
+            const assunto = encodeURIComponent(`[THE LED] Atualização do Chamado #${chamado.codigo} - ${chamado.projeto}`);
+            const corpo = encodeURIComponent(
+                `Olá, ${chamado.cliente_nome}.\n\n` +
+                `Seu chamado de suporte técnico foi registrado com sucesso!\n\n` +
+                `📌 Código do Chamado: #${chamado.codigo}\n` +
+                `🏢 Projeto: ${chamado.projeto}\n` +
+                `🛠️ Técnico Responsável: ${chamado.tecnico_nome} (${chamado.tecnico_telefone})\n` +
+                `🚨 Nível de Urgência (SLA): ${chamado.sla_nivel}\n` +
+                `📝 Descrição: ${chamado.descricao_problema}\n` +
+                `✅ Status do Chamado: ${chamado.status}\n\n` +
+                `Atenciosamente,\nEquipe de Suporte THE LED`
+            );
+            window.open(`mailto:${chamado.email_cliente}?subject=${assunto}&body=${corpo}`);
+        }
+
         function criarChamado(e) {
             e.preventDefault();
             const btnEnviar = document.getElementById('btn-enviar');
-            btnEnviar.innerText = 'Salvando chamado...';
+            btnEnviar.innerText = 'Salvando e notificando...';
             btnEnviar.disabled = true;
 
             const fileInput = document.getElementById('arquivo_print');
-            let printUrl = null;
 
             const processarSalvamento = (imageUrl) => {
                 const chamados = getChamados();
@@ -186,15 +217,19 @@
 
                 const resolvido = document.getElementById('o_que_foi_resolvido').value;
                 const dataRes = document.getElementById('data_resolucao').value;
+                const emailCliente = document.getElementById('email_cliente').value;
+                const sla = document.getElementById('sla_nivel').value;
 
                 const novoChamado = {
                     codigo: novoCodigo,
                     cliente_nome: document.getElementById('cliente').value,
+                    email_cliente: emailCliente,
                     projeto: document.getElementById('projeto').value,
                     endereco: document.getElementById('endereco').value,
                     tecnico_nome: document.getElementById('tecnico_nome').value,
                     tecnico_telefone: document.getElementById('tecnico_telefone').value,
                     incidencia: document.getElementById('incidencia').value,
+                    sla_nivel: sla,
                     descricao_problema: document.getElementById('descricao').value,
                     o_que_foi_resolvido: resolvido || 'Pendente de solução',
                     impedimento: document.getElementById('impedimento').value || 'Nenhum impedimento registrado',
@@ -206,9 +241,11 @@
                 chamados.push(novoChamado);
                 salvarChamados(chamados);
 
-                alert(`Chamado criado com sucesso! Código do Chamado: #${novoCodigo}`);
+                alert(`Chamado #${novoCodigo} criado com sucesso! Abrindo notificação por e-mail...`);
+                enviarEmailCliente(novoChamado);
+
                 document.getElementById('form-chamado').reset();
-                btnEnviar.innerText = 'Cadastrar e Salvar Chamado';
+                btnEnviar.innerText = 'Cadastrar Chamado e Enviar Notificação';
                 btnEnviar.disabled = false;
             };
 
@@ -238,17 +275,31 @@
                 return;
             }
 
+            // Definição visual do SLA
+            let slaBadge = '';
+            if (t.sla_nivel === 'Verde') {
+                slaBadge = '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-950 text-emerald-400 border border-emerald-800">🟢 SLA: Dentro do Prazo (Normal)</span>';
+            } else if (t.sla_nivel === 'Amarelo') {
+                slaBadge = '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-amber-950 text-amber-400 border border-amber-800">🟡 SLA: Atenção (Prazo Médio)</span>';
+            } else {
+                slaBadge = '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-red-950 text-red-400 border border-red-800 animate-pulse">🔴 SLA: Urgente (Finalizar Imediatamente)</span>';
+            }
+
             container.innerHTML = `
                 <div id="pdf-content-${t.codigo}" class="bg-zinc-900 p-6 rounded-xl shadow-xl border border-zinc-800 space-y-4 text-sm text-zinc-200">
-                    <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-zinc-800 pb-3 gap-2">
                         <div>
                             <span class="font-bold text-pink-500">Chamado Técnico #${t.codigo}</span>
                             <h3 class="text-base font-semibold text-zinc-100">${t.projeto}</h3>
                         </div>
-                        <span class="px-3 py-1 rounded-full text-xs font-semibold ${t.status === 'Concluído' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-amber-950 text-amber-400 border border-amber-800'}">${t.status}</span>
+                        <div class="flex items-center gap-2">
+                            ${slaBadge}
+                            <span class="px-3 py-1 rounded-full text-xs font-semibold ${t.status === 'Concluído' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-zinc-800 text-zinc-300'}">${t.status}</span>
+                        </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-3 text-xs sm:text-sm">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm">
                         <div><strong class="text-zinc-400">Cliente:</strong> ${t.cliente_nome}</div>
+                        <div><strong class="text-zinc-400">E-mail Corporativo:</strong> ${t.email_cliente || 'Não informado'}</div>
                         <div><strong class="text-zinc-400">Endereço:</strong> ${t.endereco}</div>
                         <div><strong class="text-zinc-400">Técnico:</strong> ${t.tecnico_nome} (${t.tecnico_telefone})</div>
                         <div><strong class="text-zinc-400">Incidência:</strong> <span class="text-pink-400 font-semibold">${t.incidencia}</span></div>
@@ -270,7 +321,10 @@
                     </div>
                     ${t.print_url ? `<div><p class="text-xs font-semibold text-zinc-400 mb-1">EVIDÊNCIA EM PRINT:</p><img src="${t.print_url}" class="max-h-48 rounded border border-zinc-800"></div>` : ''}
                 </div>
-                <button onclick="gerarPDF(${t.codigo})" class="w-full bg-zinc-800 hover:bg-zinc-700 text-white font-medium p-2.5 rounded-lg transition text-sm flex items-center justify-center gap-2 border border-zinc-700">📄 Exportar Relatório em PDF para Chefia</button>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <button onclick="gerarPDF(${t.codigo})" class="w-full bg-zinc-800 hover:bg-zinc-700 text-white font-medium p-2.5 rounded-lg transition text-sm flex items-center justify-center gap-2 border border-zinc-700">📄 Exportar Relatório em PDF</button>
+                    <button onclick='enviarEmailCliente(${JSON.stringify(t)})' class="w-full bg-purple-900/60 hover:bg-purple-800 text-purple-200 font-medium p-2.5 rounded-lg transition text-sm flex items-center justify-center gap-2 border border-purple-700">📧 Enviar Notificação por E-mail</button>
+                </div>
             `;
         }
 
@@ -305,7 +359,7 @@
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Número de Ocorrências',
+                        label: 'Ocorrências por Incidência',
                         data: valores,
                         backgroundColor: '#ec4899',
                         borderRadius: 6
