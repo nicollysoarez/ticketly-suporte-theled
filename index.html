@@ -1,129 +1,285 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Chamados - TomTicket Style</title>
-    <!-- Tailwind CSS para estilização rápida e otimizada -->
+    <title>THE LED - Suporte Técnico & Auditoria</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Supabase JS Client para persistência na nuvem sem framework -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Biblioteca para gerar PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- Chart.js para o Dashboard -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="bg-slate-50 text-slate-800 min-p-4">
+<body class="bg-zinc-950 text-zinc-100 min-h-screen p-4 transition-colors duration-300">
 
-    <div class="max-w-3xl mx-auto p-4 md:p-8">
+    <div class="max-w-4xl mx-auto p-4 md:p-8">
         <!-- Cabeçalho -->
-        <header class="flex flex-col sm:flex-row justify-between items-center border-b pb-4 mb-6 gap-4">
-            <h1 class="text-xl font-bold text-blue-600">Suporte Técnico - Chamados</h1>
-            <div class="flex gap-2">
-                <button onclick="switchTab('abrir')" id="btn-abrir" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium transition">Novo Chamado</button>
-                <button onclick="switchTab('buscar')" id="btn-buscar" class="px-4 py-2 bg-white text-slate-600 border rounded-lg text-sm font-medium transition">Acompanhar</button>
+        <header class="flex flex-col sm:flex-row justify-between items-center border-b border-zinc-800 pb-4 mb-6 gap-4">
+            <div class="flex items-center gap-3">
+                <!-- Logotipo Estilizado The LED -->
+                <div class="flex gap-1 h-6 items-center">
+                    <div class="w-2 h-full bg-gradient-to-t from-orange-500 to-amber-400 rounded-sm"></div>
+                    <div class="w-2 h-full bg-purple-600 rounded-sm"></div>
+                    <div class="w-2 h-full bg-pink-500 rounded-sm"></div>
+                </div>
+                <div>
+                    <h1 class="text-xl font-black tracking-wider text-white">THE <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">LED</span></h1>
+                    <p class="text-xs text-zinc-400">Suporte Técnico & Gestão de Chamados</p>
+                </div>
+            </div>
+            
+            <div class="flex flex-wrap items-center gap-2">
+                <button onclick="switchTab('abrir')" id="btn-abrir" class="px-3 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg text-sm font-medium transition shadow-lg shadow-purple-900/20">Novo Chamado</button>
+                <button onclick="switchTab('buscar')" id="btn-buscar" class="px-3 py-2 bg-zinc-900 text-zinc-300 border border-zinc-800 rounded-lg text-sm font-medium transition hover:bg-zinc-800">Acompanhar</button>
+                <button onclick="switchTab('dashboard')" id="btn-dashboard" class="px-3 py-2 bg-zinc-900 text-zinc-300 border border-zinc-800 rounded-lg text-sm font-medium transition hover:bg-zinc-800">Dashboard</button>
+                
+                <!-- Botão Tema Dark/Light -->
+                <button onclick="toggleTheme()" class="p-2 bg-zinc-900 text-zinc-300 border border-zinc-800 rounded-lg text-sm transition hover:bg-zinc-800" title="Alternar Tema">
+                    🌙/☀️
+                </button>
             </div>
         </header>
 
         <!-- Aba: Abrir Chamado -->
-        <div id="tab-abrir" class="bg-white p-6 rounded-xl shadow-sm border space-y-4">
-            <h2 class="text-lg font-semibold border-b pb-2">Abrir Novo Chamado</h2>
+        <div id="tab-abrir" class="bg-zinc-900 p-6 rounded-xl shadow-xl border border-zinc-800 space-y-4">
+            <h2 class="text-lg font-semibold border-b border-zinc-800 pb-2 text-zinc-200">Abertura e Registro Técnico</h2>
             <form id="form-chamado" onsubmit="criarChamado(event)" class="space-y-4">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Nome do Cliente</label>
-                        <input type="text" id="cliente" required class="w-full p-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                        <label class="block text-xs font-semibold uppercase text-zinc-400 mb-1">Nome do Cliente</label>
+                        <input type="text" id="cliente" required class="w-full p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:ring-2 focus:ring-purple-500 outline-none">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Projeto</label>
-                        <input type="text" id="projeto" required class="w-full p-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                        <label class="block text-xs font-semibold uppercase text-zinc-400 mb-1">Projeto</label>
+                        <input type="text" id="projeto" required class="w-full p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:ring-2 focus:ring-purple-500 outline-none">
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Endereço do Projeto</label>
-                    <input type="text" id="endereco" required class="w-full p-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                    <label class="block text-xs font-semibold uppercase text-zinc-400 mb-1">Endereço do Projeto</label>
+                    <input type="text" id="endereco" required class="w-full p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:ring-2 focus:ring-purple-500 outline-none">
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Nome do Técnico</label>
-                        <input type="text" id="tecnico_nome" required class="w-full p-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                        <label class="block text-xs font-semibold uppercase text-zinc-400 mb-1">Nome do Técnico</label>
+                        <input type="text" id="tecnico_nome" required class="w-full p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:ring-2 focus:ring-purple-500 outline-none">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Telefone do Técnico</label>
-                        <input type="text" id="tecnico_telefone" required placeholder="(00) 00000-0000" class="w-full p-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                        <label class="block text-xs font-semibold uppercase text-zinc-400 mb-1">Telefone do Técnico</label>
+                        <input type="text" id="tecnico_telefone" required placeholder="(00) 00000-0000" class="w-full p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:ring-2 focus:ring-purple-500 outline-none">
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Descrição do Problema</label>
-                    <textarea id="descricao" rows="3" required class="w-full p-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
-                </div>
-
-                <div class="border-t pt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div class="sm:col-span-2">
-                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">O que foi resolvido (Opcional)</label>
-                        <input type="text" id="o_que_foi_resolvido" class="w-full p-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                    </div>
+                <div class="border-t border-zinc-800 pt-4 space-y-4">
                     <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Data da Resolução</label>
-                        <input type="date" id="data_resolucao" class="w-full p-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                        <label class="block text-xs font-semibold uppercase text-zinc-400 mb-1">Incidência (Causa Raiz do Problema)</label>
+                        <select id="incidencia" required class="w-full p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:ring-2 focus:ring-purple-500 outline-none">
+                            <option value="">Selecione a incidência principal...</option>
+                            <option value="Falha de Hardware / Painel LED">Falha de Hardware / Painel LED</option>
+                            <option value="Problema de Cabeamento / Fibra">Problema de Cabeamento / Fibra</option>
+                            <option value="Configuração de Software / Processador de Vídeo">Configuração de Software / Processador de Vídeo</option>
+                            <option value="Oscilação / Falta de Energia">Oscilação / Falta de Energia</option>
+                            <option value="Dano Provocado por Terceiros">Dano Provocado por Terceiros</option>
+                            <option value="Outros">Outros</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-zinc-400 mb-1">Descrição Inicial do Problema</label>
+                        <textarea id="descricao" rows="2" required class="w-full p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:ring-2 focus:ring-purple-500 outline-none"></textarea>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-zinc-400 mb-1">O que fizemos para solucionar</label>
+                            <textarea id="o_que_foi_resolvido" rows="2" class="w-full p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:ring-2 focus:ring-purple-500 outline-none" placeholder="Ações tomadas em campo..."></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-zinc-400 mb-1">O que impediu de solucionar (Se aplicável)</label>
+                            <textarea id="impedimento" rows="2" class="w-full p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:ring-2 focus:ring-purple-500 outline-none" placeholder="Ex: Falta de acesso ao local, peça pendente..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-zinc-400 mb-1">Data da Resolução</label>
+                            <input type="date" id="data_resolucao" class="w-full p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:ring-2 focus:ring-purple-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-zinc-400 mb-1">Anexar Print / Foto de Evidência</label>
+                            <input type="file" id="arquivo_print" accept="image/*" class="w-full p-2 bg-zinc-950 border border-zinc-800 rounded-lg text-xs text-zinc-400 file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-purple-950 file:text-purple-300 hover:file:bg-purple-900">
+                        </div>
+                    </div>
+
+                    <!-- Bloco de Gravação de Áudio -->
+                    <div class="bg-zinc-950 p-3 rounded-lg border border-zinc-800 space-y-2">
+                        <label class="block text-xs font-semibold uppercase text-zinc-400">Evidência em Áudio (Relato do Técnico)</label>
+                        <div class="flex items-center gap-2">
+                            <button type="button" onclick="iniciarGravacao()" id="btn-gravar" class="px-3 py-1.5 bg-red-600 text-white rounded text-xs font-medium hover:bg-red-700 transition">🔴 Gravar Áudio</button>
+                            <button type="button" onclick="pararGravacao()" id="btn-parar" disabled class="px-3 py-1.5 bg-zinc-800 text-zinc-500 rounded text-xs font-medium cursor-not-allowed">⏹️ Parar</button>
+                            <span id="status-gravacao" class="text-xs text-zinc-400">Pronto para gravar</span>
+                        </div>
+                        <audio id="audio-preview" controls class="w-full h-8 hidden mt-2"></audio>
                     </div>
                 </div>
 
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium p-2.5 rounded-lg transition text-sm">Cadastrar Chamado</button>
+                <button type="submit" id="btn-enviar" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 text-white font-medium p-2.5 rounded-lg transition text-sm shadow-lg shadow-purple-900/20">Cadastrar e Salvar Chamado</button>
             </form>
         </div>
 
         <!-- Aba: Acompanhar Chamado -->
         <div id="tab-buscar" class="hidden space-y-4">
-            <div class="bg-white p-6 rounded-xl shadow-sm border flex gap-2">
-                <input type="number" id="busca_codigo" placeholder="Digite o número do chamado..." class="flex-1 p-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                <button onclick="buscarChamado()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 rounded-lg text-sm font-medium transition">Buscar</button>
+            <div class="bg-zinc-900 p-6 rounded-xl shadow-xl border border-zinc-800 flex gap-2">
+                <input type="number" id="busca_codigo" placeholder="Digite o número do chamado..." class="flex-1 p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:ring-2 focus:ring-purple-500 outline-none">
+                <button onclick="buscarChamado()" class="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-5 rounded-lg text-sm font-medium transition">Buscar</button>
             </div>
 
             <div id="resultado-busca" class="space-y-4"></div>
         </div>
+
+        <!-- Aba: Dashboard de Recorrência -->
+        <div id="tab-dashboard" class="hidden space-y-4">
+            <div class="bg-zinc-900 p-6 rounded-xl shadow-xl border border-zinc-800 space-y-4">
+                <h3 class="text-base font-bold text-zinc-100">Incidências Mais Recorrentes</h3>
+                <p class="text-xs text-zinc-400">Visão geral estatística para apresentação à chefia.</p>
+                <div class="w-full h-64 flex justify-center items-center">
+                    <canvas id="graficoIncidencias"></canvas>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
-        // Configuração do Supabase (Insira suas chaves públicas ou variáveis)
+        // Configuração do Supabase (Insira suas chaves do Supabase)
         const SUPABASE_URL = 'SUA_URL_DO_SUPABASE';
         const SUPABASE_ANON_KEY = 'SUA_CHAVE_ANON_DO_SUPABASE';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        function switchTab(tab) {
-            if (tab === 'abrir') {
-                document.getElementById('tab-abrir').classList.remove('hidden');
-                document.getElementById('tab-buscar').classList.add('hidden');
-                document.getElementById('btn-abrir').className = 'px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium transition';
-                document.getElementById('btn-buscar').className = 'px-4 py-2 bg-white text-slate-600 border rounded-lg text-sm font-medium transition';
+        let mediaRecorder;
+        let audioChunks = [];
+        let audioBlob = null;
+        let chartInstance = null;
+
+        // Alternar Tema Escuro / Claro
+        function toggleTheme() {
+            const html = document.documentElement;
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                document.body.className = "bg-slate-50 text-slate-900 min-h-screen p-4 transition-colors duration-300";
             } else {
-                document.getElementById('tab-abrir').classList.add('hidden');
-                document.getElementById('tab-buscar').classList.remove('hidden');
-                document.getElementById('btn-buscar').className = 'px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium transition';
-                document.getElementById('btn-abrir').className = 'px-4 py-2 bg-white text-slate-600 border rounded-lg text-sm font-medium transition';
+                html.classList.add('dark');
+                document.body.className = "bg-zinc-950 text-zinc-100 min-h-screen p-4 transition-colors duration-300";
             }
+        }
+
+        function switchTab(tab) {
+            ['abrir', 'buscar', 'dashboard'].forEach(t => {
+                document.getElementById(`tab-${t}`).classList.add('hidden');
+                document.getElementById(`btn-${t}`).className = 'px-3 py-2 bg-zinc-900 text-zinc-300 border border-zinc-800 rounded-lg text-sm font-medium transition hover:bg-zinc-800';
+            });
+            document.getElementById(`tab-${tab}`).classList.remove('hidden');
+            document.getElementById(`btn-${tab}`).className = 'px-3 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg text-sm font-medium transition shadow-lg shadow-purple-900/20';
+
+            if (tab === 'dashboard') carregarDashboard();
+        }
+
+        // Gravação de Áudio
+        async function iniciarGravacao() {
+            audioChunks = [];
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+                mediaRecorder.onstop = () => {
+                    audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    const audioElem = document.getElementById('audio-preview');
+                    audioElem.src = audioUrl;
+                    audioElem.classList.remove('hidden');
+                };
+                mediaRecorder.start();
+                document.getElementById('btn-gravar').disabled = true;
+                document.getElementById('btn-gravar').className = 'px-3 py-1.5 bg-zinc-800 text-zinc-500 rounded text-xs cursor-not-allowed';
+                document.getElementById('btn-parar').disabled = false;
+                document.getElementById('btn-parar').className = 'px-3 py-1.5 bg-green-600 text-white rounded text-xs font-medium hover:bg-green-700 transition';
+                document.getElementById('status-gravacao').innerText = 'Gravando áudio...';
+            } catch (err) {
+                alert('Erro ao acessar o microfone: ' + err.message);
+            }
+        }
+
+        function pararGravacao() {
+            mediaRecorder.stop();
+            document.getElementById('btn-gravar').disabled = false;
+            document.getElementById('btn-gravar').className = 'px-3 py-1.5 bg-red-600 text-white rounded text-xs font-medium hover:bg-red-700 transition';
+            document.getElementById('btn-parar').disabled = true;
+            document.getElementById('btn-parar').className = 'px-3 py-1.5 bg-zinc-800 text-zinc-500 rounded text-xs cursor-not-allowed';
+            document.getElementById('status-gravacao').innerText = 'Áudio gravado com sucesso!';
         }
 
         async function criarChamado(e) {
             e.preventDefault();
+            document.getElementById('btn-enviar').innerText = 'Salvando evidências...';
+
+            let printUrl = null;
+            let audioUrl = null;
+
+            const fileInput = document.getElementById('arquivo_print');
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                const fileName = `print_${Date.now()}_${file.name}`;
+                const { data: fileData, error: fileError } = await _supabase.storage.from('evidencias').upload(fileName, file);
+                if (!fileError) {
+                    const { data: publicURL } = _supabase.storage.from('evidencias').getPublicUrl(fileName);
+                    printUrl = publicURL.publicUrl;
+                }
+            }
+
+            if (audioBlob) {
+                const audioName = `audio_${Date.now()}.webm`;
+                const { data: audioData, error: audioError } = await _supabase.storage.from('evidencias').upload(audioName, audioBlob);
+                if (!audioError) {
+                    const { data: publicURL } = _supabase.storage.from('evidencias').getPublicUrl(audioName);
+                    audioUrl = publicURL.publicUrl;
+                }
+            }
+
+            const resolvido = document.getElementById('o_que_foi_resolvido').value;
             const payload = {
                 cliente_nome: document.getElementById('cliente').value,
                 projeto: document.getElementById('projeto').value,
                 endereco: document.getElementById('endereco').value,
                 tecnico_nome: document.getElementById('tecnico_nome').value,
                 tecnico_telefone: document.getElementById('tecnico_telefone').value,
+                incidencia: document.getElementById('incidencia').value,
                 descricao_problema: document.getElementById('descricao').value,
-                o_que_foi_resolvido: document.getElementById('o_que_foi_resolvido').value || null,
+                o_que_foi_resolvido: resolvido || null,
+                impedimento: document.getElementById('impedimento').value || null,
                 data_resolucao: document.getElementById('data_resolucao').value || null,
-                status: document.getElementById('o_que_foi_resolvido').value ? 'Concluído' : 'Pendente'
+                status: resolvido ? 'Concluído' : 'Pendente',
+                print_url: printUrl,
+                audio_url: audioUrl
             };
 
             const { data, error } = await _supabase.from('tickets').insert([payload]).select();
 
+            document.getElementById('btn-enviar').innerText = 'Cadastrar e Salvar Chamado';
             if (error) {
                 alert('Erro ao salvar: ' + error.message);
             } else {
                 alert(`Chamado criado com sucesso! Código: #${data[0].codigo}`);
                 document.getElementById('form-chamado').reset();
+                document.getElementById('audio-preview').classList.add('hidden');
+                audioBlob = null;
             }
         }
 
@@ -136,35 +292,96 @@
             container.innerHTML = '';
 
             if (error || data.length === 0) {
-                container.innerHTML = '<div class="bg-white p-4 rounded-xl text-center text-slate-500 border text-sm">Nenhum chamado encontrado com este código.</div>';
+                container.innerHTML = '<div class="bg-zinc-900 p-4 rounded-xl text-center text-zinc-400 border border-zinc-800 text-sm">Nenhum chamado encontrado.</div>';
                 return;
             }
 
             data.forEach(t => {
                 container.innerHTML += `
-                    <div class="bg-white p-6 rounded-xl shadow-sm border space-y-3 text-sm">
-                        <div class="flex justify-between items-center border-b pb-2">
-                            <span class="font-bold text-blue-600">Chamado #${t.codigo}</span>
-                            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold ${t.status === 'Concluído' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}">${t.status}</span>
+                    <div id="pdf-content-${t.codigo}" class="bg-zinc-900 p-6 rounded-xl shadow-xl border border-zinc-800 space-y-4 text-sm text-zinc-200">
+                        <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
+                            <div>
+                                <span class="font-bold text-pink-500">Chamado Técnico #${t.codigo}</span>
+                                <h3 class="text-base font-semibold text-zinc-100">${t.projeto}</h3>
+                            </div>
+                            <span class="px-3 py-1 rounded-full text-xs font-semibold ${t.status === 'Concluído' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-amber-950 text-amber-400 border border-amber-800'}">${t.status}</span>
                         </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div><strong class="text-slate-500">Cliente:</strong> ${t.cliente_nome}</div>
-                            <div><strong class="text-slate-500">Projeto:</strong> ${t.projeto}</div>
-                            <div class="col-span-2"><strong class="text-slate-500">Endereço:</strong> ${t.endereco}</div>
-                            <div><strong class="text-slate-500">Técnico:</strong> ${t.tecnico_nome} (${t.tecnico_telefone})</div>
-                            <div><strong class="text-slate-500">Resolução:</strong> ${t.data_resolucao || 'Pendente'}</div>
+                        <div class="grid grid-cols-2 gap-3 text-xs sm:text-sm">
+                            <div><strong class="text-zinc-400">Cliente:</strong> ${t.cliente_nome}</div>
+                            <div><strong class="text-zinc-400">Endereço:</strong> ${t.endereco}</div>
+                            <div><strong class="text-zinc-400">Técnico:</strong> ${t.tecnico_nome} (${t.tecnico_telefone})</div>
+                            <div><strong class="text-zinc-400">Incidência:</strong> <span class="text-pink-400 font-semibold">${t.incidencia}</span></div>
                         </div>
-                        <div class="bg-slate-50 p-2.5 rounded border">
-                            <p class="text-xs font-semibold text-slate-500">PROBLEMA:</p>
+                        <div class="bg-zinc-950 p-3 rounded border border-zinc-800">
+                            <p class="text-xs font-semibold text-zinc-400">DESCRIÇÃO INICIAL:</p>
                             <p>${t.descricao_problema}</p>
                         </div>
-                        ${t.o_que_foi_resolvido ? `
-                        <div class="bg-green-50 p-2.5 rounded border border-green-200">
-                            <p class="text-xs font-semibold text-green-700">SOLUÇÃO:</p>
-                            <p class="text-green-900">${t.o_que_foi_resolvido}</p>
-                        </div>` : ''}
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div class="bg-emerald-950/40 p-3 rounded border border-emerald-900">
+                                <p class="text-xs font-semibold text-emerald-400">O QUE FOI RESOLVIDO:</p>
+                                <p class="text-emerald-200">${t.o_que_foi_resolvido || 'Pendente de solução'}</p>
+                            </div>
+                            <div class="bg-amber-950/40 p-3 rounded border border-amber-900">
+                                <p class="text-xs font-semibold text-amber-400">IMPEDIMENTO (SE HOUVER):</p>
+                                <p class="text-amber-200">${t.impedimento || 'Nenhum impedimento registrado'}</p>
+                            </div>
+                        </div>
+                        ${t.print_url ? `<div><p class="text-xs font-semibold text-zinc-400 mb-1">EVIDÊNCIA EM PRINT:</p><img src="${t.print_url}" class="max-h-48 rounded border border-zinc-800"></div>` : ''}
+                        ${t.audio_url ? `<div><p class="text-xs font-semibold text-zinc-400 mb-1">ÁUDIO DO TÉCNICO:</p><audio controls src="${t.audio_url}" class="w-full h-8"></audio></div>` : ''}
                     </div>
+                    <button onclick="gerarPDF(${t.codigo})" class="w-full bg-zinc-800 hover:bg-zinc-700 text-white font-medium p-2.5 rounded-lg transition text-sm flex items-center justify-center gap-2 border border-zinc-700">📄 Exportar Relatório em PDF para Chefia</button>
                 `;
+            });
+        }
+
+        function gerarPDF(codigo) {
+            const element = document.getElementById(`pdf-content-${codigo}`);
+            const opt = {
+                margin: 10,
+                filename: `Relatorio_Chamado_${codigo}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            html2pdf().from(element).set(opt).save();
+        }
+
+        async function carregarDashboard() {
+            const { data, error } = await _supabase.from('tickets').select('incidencia');
+            if (error) return;
+
+            const contagem = {};
+            data.forEach(item => {
+                const inc = item.incidencia || 'Não classificado';
+                contagem[inc] = (contagem[inc] || 0) + 1;
+            });
+
+            const labels = Object.keys(contagem);
+            const valores = Object.values(contagem);
+
+            if (chartInstance) chartInstance.destroy();
+
+            const ctx = document.getElementById('graficoIncidencias').getContext('2d');
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Número de Ocorrências',
+                        data: valores,
+                        backgroundColor: '#ec4899',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: '#a1a1aa' }, grid: { color: '#27272a' } },
+                        y: { ticks: { color: '#a1a1aa' }, grid: { color: '#27272a' } }
+                    }
+                }
             });
         }
     </script>
