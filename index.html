@@ -3,11 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>THE LED - Suporte Técnico & Auditoria com SLA</title>
+    <title>THE LED - Suporte Técnico & Notificação Interna</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = { darkMode: 'class' }
+    </script>
+    <!-- EmailJS SDK para envio automático de e-mail -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript">
+        (function() {
+            // Insira sua Public Key do EmailJS aqui
+            emailjs.init("uD8ywBz4YikRnUhze");
+        })();
     </script>
     <!-- Biblioteca para gerar PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -27,7 +35,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-black tracking-wider text-white">THE <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">LED</span></h1>
-                    <p class="text-xs text-zinc-400">Suporte Técnico, SLA & Notificação por E-mail</p>
+                    <p class="text-xs text-zinc-400">Suporte Técnico & Alerta Automático Interno</p>
                 </div>
             </div>
             
@@ -41,7 +49,7 @@
 
         <!-- Aba: Abrir Chamado -->
         <div id="tab-abrir" class="bg-zinc-900 p-6 rounded-xl shadow-xl border border-zinc-800 space-y-4">
-            <h2 class="text-lg font-semibold border-b border-zinc-800 pb-2 text-zinc-200">Abertura e Registro Técnico com SLA</h2>
+            <h2 class="text-lg font-semibold border-b border-zinc-800 pb-2 text-zinc-200">Abertura e Registro Técnico</h2>
             <form id="form-chamado" onsubmit="criarChamado(event)" class="space-y-4">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -49,20 +57,14 @@
                         <input type="text" id="cliente" required class="w-full p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:ring-2 focus:ring-purple-500 outline-none">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold uppercase text-zinc-400 mb-1">E-mail Corporativo do Cliente</label>
-                        <input type="email" id="email_cliente" required placeholder="cliente@empresa.com.br" class="w-full p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:ring-2 focus:ring-purple-500 outline-none">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
                         <label class="block text-xs font-semibold uppercase text-zinc-400 mb-1">Projeto</label>
                         <input type="text" id="projeto" required class="w-full p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:ring-2 focus:ring-purple-500 outline-none">
                     </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase text-zinc-400 mb-1">Endereço do Projeto</label>
-                        <input type="text" id="endereco" required class="w-full p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:ring-2 focus:ring-purple-500 outline-none">
-                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-zinc-400 mb-1">Endereço do Projeto</label>
+                    <input type="text" id="endereco" required class="w-full p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:ring-2 focus:ring-purple-500 outline-none">
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -91,11 +93,11 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold uppercase text-zinc-400 mb-1">Nível de Urgência (SLA)</label>
+                            <label class="block text-xs font-semibold uppercase text-zinc-400 mb-1">Sinalização de SLA (Urgência)</label>
                             <select id="sla_nivel" required class="w-full p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:ring-2 focus:ring-purple-500 outline-none">
-                                <option value="Verde">🟢 Normal - Dentro do Prazo (48h)</option>
-                                <option value="Amarelo">🟡 Médio - Atenção (24h)</option>
-                                <option value="Vermelho">🔴 Urgente - Finalizar Imediatamente (4h)</option>
+                                <option value="Verde">🟢 Verde - Dentro do Prazo / Normal</option>
+                                <option value="Amarelo">🟡 Amarelo - Atenção / Médio</option>
+                                <option value="Vermelho">🔴 Vermelho - Urgente / Finalizar Imediatamente</option>
                             </select>
                         </div>
                     </div>
@@ -112,7 +114,7 @@
                         </div>
                         <div>
                             <label class="block text-xs font-semibold uppercase text-zinc-400 mb-1">Impedimentos (Se houver)</label>
-                            <textarea id="impedimento" rows="2" class="w-full p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:ring-2 focus:ring-purple-500 outline-none" placeholder="Ex: Peça pendente, sem acesso ao local..."></textarea>
+                            <textarea id="impedimento" rows="2" class="w-full p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:ring-2 focus:ring-purple-500 outline-none" placeholder="Ex: Peça pendente, sem acesso..."></textarea>
                         </div>
                     </div>
 
@@ -128,7 +130,7 @@
                     </div>
                 </div>
 
-                <button type="submit" id="btn-enviar" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 text-white font-medium p-2.5 rounded-lg transition text-sm shadow-lg shadow-purple-900/20">Cadastrar Chamado e Enviar Notificação</button>
+                <button type="submit" id="btn-enviar" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 text-white font-medium p-2.5 rounded-lg transition text-sm shadow-lg shadow-purple-900/20">Cadastrar Chamado e Disparar Alerta Interno</button>
             </form>
         </div>
 
@@ -144,8 +146,8 @@
         <!-- Aba: Dashboard de Recorrência -->
         <div id="tab-dashboard" class="hidden space-y-4">
             <div class="bg-zinc-900 p-6 rounded-xl shadow-xl border border-zinc-800 space-y-4">
-                <h3 class="text-base font-bold text-zinc-100">Incidências & Status de SLA</h3>
-                <p class="text-xs text-zinc-400">Visão geral estatística de chamados e prioridades de atendimento.</p>
+                <h3 class="text-base font-bold text-zinc-100">Incidências & Status de SLA Interno</h3>
+                <p class="text-xs text-zinc-400">Visão geral estatística para controle da equipe de suporte e análise.</p>
                 <div class="w-full h-64 flex justify-center items-center">
                     <canvas id="graficoIncidencias"></canvas>
                 </div>
@@ -187,26 +189,10 @@
             localStorage.setItem('theled_chamados', JSON.stringify(lista));
         }
 
-        function enviarEmailCliente(chamado) {
-            const assunto = encodeURIComponent(`[THE LED] Atualização do Chamado #${chamado.codigo} - ${chamado.projeto}`);
-            const corpo = encodeURIComponent(
-                `Olá, ${chamado.cliente_nome}.\n\n` +
-                `Seu chamado de suporte técnico foi registrado com sucesso!\n\n` +
-                `📌 Código do Chamado: #${chamado.codigo}\n` +
-                `🏢 Projeto: ${chamado.projeto}\n` +
-                `🛠️ Técnico Responsável: ${chamado.tecnico_nome} (${chamado.tecnico_telefone})\n` +
-                `🚨 Nível de Urgência (SLA): ${chamado.sla_nivel}\n` +
-                `📝 Descrição: ${chamado.descricao_problema}\n` +
-                `✅ Status do Chamado: ${chamado.status}\n\n` +
-                `Atenciosamente,\nEquipe de Suporte THE LED`
-            );
-            window.open(`mailto:${chamado.email_cliente}?subject=${assunto}&body=${corpo}`);
-        }
-
         function criarChamado(e) {
             e.preventDefault();
             const btnEnviar = document.getElementById('btn-enviar');
-            btnEnviar.innerText = 'Salvando e notificando...';
+            btnEnviar.innerText = 'Salvando e notificando equipe...';
             btnEnviar.disabled = true;
 
             const fileInput = document.getElementById('arquivo_print');
@@ -217,13 +203,11 @@
 
                 const resolvido = document.getElementById('o_que_foi_resolvido').value;
                 const dataRes = document.getElementById('data_resolucao').value;
-                const emailCliente = document.getElementById('email_cliente').value;
                 const sla = document.getElementById('sla_nivel').value;
 
                 const novoChamado = {
                     codigo: novoCodigo,
                     cliente_nome: document.getElementById('cliente').value,
-                    email_cliente: emailCliente,
                     projeto: document.getElementById('projeto').value,
                     endereco: document.getElementById('endereco').value,
                     tecnico_nome: document.getElementById('tecnico_nome').value,
@@ -241,12 +225,32 @@
                 chamados.push(novoChamado);
                 salvarChamados(chamados);
 
-                alert(`Chamado #${novoCodigo} criado com sucesso! Abrindo notificação por e-mail...`);
-                enviarEmailCliente(novoChamado);
+                // Parâmetros para envio automático via EmailJS direto para a equipe interna
+                const templateParams = {
+                    codigo: novoCodigo,
+                    cliente: novoChamado.cliente_nome,
+                    projeto: novoChamado.projeto,
+                    tecnico: novoChamado.tecnico_nome,
+                    telefone: novoChamado.tecnico_telefone,
+                    incidencia: novoChamado.incidencia,
+                    sla: novoChamado.sla_nivel,
+                    descricao: novoChamado.descricao_problema,
+                    status: novoChamado.status
+                };
 
-                document.getElementById('form-chamado').reset();
-                btnEnviar.innerText = 'Cadastrar Chamado e Enviar Notificação';
-                btnEnviar.disabled = false;
+                // Disparo automático do e-mail interno (Substitua Service ID e Template ID do EmailJS)
+                emailjs.send('SEU_SERVICE_ID', 'SEU_TEMPLATE_ID', templateParams)
+                    .then(function(response) {
+                        alert(`Chamado #${novoCodigo} criado e alerta enviado automaticamente para a equipe interna!`);
+                        document.getElementById('form-chamado').reset();
+                        btnEnviar.innerText = 'Cadastrar Chamado e Disparar Alerta Interno';
+                        btnEnviar.disabled = false;
+                    }, function(error) {
+                        alert(`Chamado #${novoCodigo} salvo localmente, mas houve falha ao enviar o e-mail automático: ` + JSON.stringify(error));
+                        document.getElementById('form-chamado').reset();
+                        btnEnviar.innerText = 'Cadastrar Chamado e Disparar Alerta Interno';
+                        btnEnviar.disabled = false;
+                    });
             };
 
             if (fileInput && fileInput.files.length > 0) {
@@ -275,7 +279,6 @@
                 return;
             }
 
-            // Definição visual do SLA
             let slaBadge = '';
             if (t.sla_nivel === 'Verde') {
                 slaBadge = '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-950 text-emerald-400 border border-emerald-800">🟢 SLA: Dentro do Prazo (Normal)</span>';
@@ -297,9 +300,8 @@
                             <span class="px-3 py-1 rounded-full text-xs font-semibold ${t.status === 'Concluído' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-zinc-800 text-zinc-300'}">${t.status}</span>
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm">
+                    <div class="grid grid-cols-2 gap-3 text-xs sm:text-sm">
                         <div><strong class="text-zinc-400">Cliente:</strong> ${t.cliente_nome}</div>
-                        <div><strong class="text-zinc-400">E-mail Corporativo:</strong> ${t.email_cliente || 'Não informado'}</div>
                         <div><strong class="text-zinc-400">Endereço:</strong> ${t.endereco}</div>
                         <div><strong class="text-zinc-400">Técnico:</strong> ${t.tecnico_nome} (${t.tecnico_telefone})</div>
                         <div><strong class="text-zinc-400">Incidência:</strong> <span class="text-pink-400 font-semibold">${t.incidencia}</span></div>
@@ -321,10 +323,7 @@
                     </div>
                     ${t.print_url ? `<div><p class="text-xs font-semibold text-zinc-400 mb-1">EVIDÊNCIA EM PRINT:</p><img src="${t.print_url}" class="max-h-48 rounded border border-zinc-800"></div>` : ''}
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <button onclick="gerarPDF(${t.codigo})" class="w-full bg-zinc-800 hover:bg-zinc-700 text-white font-medium p-2.5 rounded-lg transition text-sm flex items-center justify-center gap-2 border border-zinc-700">📄 Exportar Relatório em PDF</button>
-                    <button onclick='enviarEmailCliente(${JSON.stringify(t)})' class="w-full bg-purple-900/60 hover:bg-purple-800 text-purple-200 font-medium p-2.5 rounded-lg transition text-sm flex items-center justify-center gap-2 border border-purple-700">📧 Enviar Notificação por E-mail</button>
-                </div>
+                <button onclick="gerarPDF(${t.codigo})" class="w-full bg-zinc-800 hover:bg-zinc-700 text-white font-medium p-2.5 rounded-lg transition text-sm flex items-center justify-center gap-2 border border-zinc-700">📄 Exportar Relatório em PDF para Chefia</button>
             `;
         }
 
