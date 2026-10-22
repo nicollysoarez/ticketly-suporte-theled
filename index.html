@@ -27,7 +27,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-black tracking-wider text-white">THE <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">LED</span></h1>
-                    <p class="text-xs text-zinc-400">Suporte Técnico & Gestão de Chamados</p>
+                    <p class="text-xs text-zinc-400">Suporte Técnico & Gestão de Chamados (Modo Direto)</p>
                 </div>
             </div>
             
@@ -41,7 +41,7 @@
 
         <!-- Aba: Abrir Chamado -->
         <div id="tab-abrir" class="bg-zinc-900 p-6 rounded-xl shadow-xl border border-zinc-800 space-y-4">
-            <h2 class="text-lg font-semibold border-b border-zinc-800 pb-2 text-zinc-200">Abertura e Registro Técnico</h2>
+            <h2 class="text-lg font-semibold border-b border-zinc-800 pb-2 text-zinc-200">Abertura e Registro Técnico (Estilo TomTicket)</h2>
             <form id="form-chamado" onsubmit="criarChamado(event)" class="space-y-4">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -91,7 +91,7 @@
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-semibold uppercase text-zinc-400 mb-1">O que fizemos para solucionar</label>
+                            <label class="block text-xs font-semibold uppercase text-zinc-400 mb-1">O que foi resolvido</label>
                             <textarea id="o_que_foi_resolvido" rows="2" class="w-full p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:ring-2 focus:ring-purple-500 outline-none" placeholder="Ações tomadas em campo..."></textarea>
                         </div>
                         <div>
@@ -119,7 +119,7 @@
         <!-- Aba: Acompanhar Chamado -->
         <div id="tab-buscar" class="hidden space-y-4">
             <div class="bg-zinc-900 p-6 rounded-xl shadow-xl border border-zinc-800 flex gap-2">
-                <input type="number" id="busca_codigo" placeholder="Digite o número do chamado..." class="flex-1 p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:ring-2 focus:ring-purple-500 outline-none">
+                <input type="number" id="busca_codigo" placeholder="Digite o número do chamado (ex: 1, 2...)..." class="flex-1 p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:ring-2 focus:ring-purple-500 outline-none">
                 <button onclick="buscarChamado()" class="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-5 rounded-lg text-sm font-medium transition">Buscar</button>
             </div>
             <div id="resultado-busca" class="space-y-4"></div>
@@ -138,9 +138,6 @@
     </div>
 
     <script>
-        const SUPABASE_URL = 'https://qwejshilmvijckxsyyc.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF3ZWpzaGlsbXZpamNreHFzeXljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI2NzkxNzIsImV4cCI6MjEwODI1NTE3Mn0.ZK5y9lvJgZEvlECF1tpBHFBMpFEfO3vdfWDmxGqNlt4';
-
         let chartInstance = null;
 
         function toggleTheme() {
@@ -165,40 +162,33 @@
             if (tab === 'dashboard') carregarDashboard();
         }
 
-        async function criarChamado(e) {
+        function getChamados() {
+            const salvos = localStorage.getItem('theled_chamados');
+            return salvos ? JSON.parse(salvos) : [];
+        }
+
+        function salvarChamados(lista) {
+            localStorage.setItem('theled_chamados', JSON.stringify(lista));
+        }
+
+        function criarChamado(e) {
             e.preventDefault();
             const btnEnviar = document.getElementById('btn-enviar');
             btnEnviar.innerText = 'Salvando chamado...';
             btnEnviar.disabled = true;
 
-            try {
-                let printUrl = null;
-                const fileInput = document.getElementById('arquivo_print');
-                
-                // Upload opcional via REST nativo
-                if (fileInput && fileInput.files.length > 0) {
-                    const file = fileInput.files[0];
-                    const fileName = `print_${Date.now()}_${file.name}`;
-                    
-                    const uploadRes = await fetch(`${SUPABASE_URL}/storage/v1/object/evidencias/${fileName}`, {
-                        method: 'POST',
-                        headers: {
-                            'apikey': SUPABASE_ANON_KEY,
-                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-                            'Content-Type': file.type
-                        },
-                        body: file
-                    });
+            const fileInput = document.getElementById('arquivo_print');
+            let printUrl = null;
 
-                    if (uploadRes.ok) {
-                        printUrl = `${SUPABASE_URL}/storage/v1/object/public/evidencias/${fileName}`;
-                    }
-                }
+            const processarSalvamento = (imageUrl) => {
+                const chamados = getChamados();
+                const novoCodigo = chamados.length > 0 ? chamados[chamados.length - 1].codigo + 1 : 1;
 
                 const resolvido = document.getElementById('o_que_foi_resolvido').value;
                 const dataRes = document.getElementById('data_resolucao').value;
 
-                const payload = {
+                const novoChamado = {
+                    codigo: novoCodigo,
                     cliente_nome: document.getElementById('cliente').value,
                     projeto: document.getElementById('projeto').value,
                     endereco: document.getElementById('endereco').value,
@@ -206,109 +196,82 @@
                     tecnico_telefone: document.getElementById('tecnico_telefone').value,
                     incidencia: document.getElementById('incidencia').value,
                     descricao_problema: document.getElementById('descricao').value,
-                    o_que_foi_resolvido: resolvido || null,
-                    impedimento: document.getElementById('impedimento').value || null,
-                    data_resolucao: dataRes ? dataRes : null,
+                    o_que_foi_resolvido: resolvido || 'Pendente de solução',
+                    impedimento: document.getElementById('impedimento').value || 'Nenhum impedimento registrado',
+                    data_resolucao: dataRes || 'Não informada',
                     status: resolvido ? 'Concluído' : 'Pendente',
-                    print_url: printUrl
+                    print_url: imageUrl
                 };
 
-                // Inserção direta via REST API do Supabase (Elimina erros de SDK)
-                const response = await fetch(`${SUPABASE_URL}/rest/v1/tickets`, {
-                    method: 'POST',
-                    headers: {
-                        'apikey': SUPABASE_ANON_KEY,
-                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-                        'Content-Type': 'application/json',
-                        'Prefer': 'return=representation'
-                    },
-                    body: JSON.stringify(payload)
-                });
+                chamados.push(novoChamado);
+                salvarChamados(chamados);
 
-                if (!response.ok) {
-                    const errText = await response.text();
-                    throw new Error(errText || 'Erro ao comunicar com o servidor');
-                }
-
-                const result = await response.json();
-
-                if (result && result.length > 0) {
-                    alert(`Chamado criado com sucesso! Código do Chamado: #${result[0].codigo}`);
-                } else {
-                    alert('Chamado criado com sucesso!');
-                }
-
+                alert(`Chamado criado com sucesso! Código do Chamado: #${novoCodigo}`);
                 document.getElementById('form-chamado').reset();
-
-            } catch (err) {
-                alert('Erro ao salvar o chamado: ' + err.message);
-            } finally {
                 btnEnviar.innerText = 'Cadastrar e Salvar Chamado';
                 btnEnviar.disabled = false;
+            };
+
+            if (fileInput && fileInput.files.length > 0) {
+                const reader = new FileReader();
+                reader.onload = function(uploadEvent) {
+                    processarSalvamento(uploadEvent.target.result);
+                };
+                reader.readAsDataURL(fileInput.files[0]);
+            } else {
+                processarSalvamento(null);
             }
         }
 
-        async function buscarChamado() {
-            const codigo = document.getElementById('busca_codigo').value;
-            if (!codigo) return;
+        function buscarChamado() {
+            const codigoInput = document.getElementById('busca_codigo').value;
+            if (!codigoInput) return;
 
-            try {
-                const response = await fetch(`${SUPABASE_URL}/rest/v1/tickets?codigo=eq.${codigo}`, {
-                    method: 'GET',
-                    headers: {
-                        'apikey': SUPABASE_ANON_KEY,
-                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                    }
-                });
+            const codigo = parseInt(codigoInput);
+            const chamados = getChamados();
+            const t = chamados.find(item => item.codigo === codigo);
+            const container = document.getElementById('resultado-busca');
+            container.innerHTML = '';
 
-                const data = await response.json();
-                const container = document.getElementById('resultado-busca');
-                container.innerHTML = '';
-
-                if (!data || data.length === 0) {
-                    container.innerHTML = '<div class="bg-zinc-900 p-4 rounded-xl text-center text-zinc-400 border border-zinc-800 text-sm">Nenhum chamado encontrado com este número.</div>';
-                    return;
-                }
-
-                data.forEach(t => {
-                    container.innerHTML += `
-                        <div id="pdf-content-${t.codigo}" class="bg-zinc-900 p-6 rounded-xl shadow-xl border border-zinc-800 space-y-4 text-sm text-zinc-200">
-                            <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
-                                <div>
-                                    <span class="font-bold text-pink-500">Chamado Técnico #${t.codigo}</span>
-                                    <h3 class="text-base font-semibold text-zinc-100">${t.projeto}</h3>
-                                </div>
-                                <span class="px-3 py-1 rounded-full text-xs font-semibold ${t.status === 'Concluído' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-amber-950 text-amber-400 border border-amber-800'}">${t.status}</span>
-                            </div>
-                            <div class="grid grid-cols-2 gap-3 text-xs sm:text-sm">
-                                <div><strong class="text-zinc-400">Cliente:</strong> ${t.cliente_nome}</div>
-                                <div><strong class="text-zinc-400">Endereço:</strong> ${t.endereco}</div>
-                                <div><strong class="text-zinc-400">Técnico:</strong> ${t.tecnico_nome} (${t.tecnico_telefone})</div>
-                                <div><strong class="text-zinc-400">Incidência:</strong> <span class="text-pink-400 font-semibold">${t.incidencia}</span></div>
-                                <div><strong class="text-zinc-400">Data Resolução:</strong> ${t.data_resolucao || 'Não informada'}</div>
-                            </div>
-                            <div class="bg-zinc-950 p-3 rounded border border-zinc-800">
-                                <p class="text-xs font-semibold text-zinc-400">DESCRIÇÃO INICIAL:</p>
-                                <p>${t.descricao_problema}</p>
-                            </div>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div class="bg-emerald-950/40 p-3 rounded border border-emerald-900">
-                                    <p class="text-xs font-semibold text-emerald-400">O QUE FOI RESOLVIDO:</p>
-                                    <p class="text-emerald-200">${t.o_que_foi_resolvido || 'Pendente de solução'}</p>
-                                </div>
-                                <div class="bg-amber-950/40 p-3 rounded border border-amber-900">
-                                    <p class="text-xs font-semibold text-amber-400">IMPEDIMENTO (SE HOUVER):</p>
-                                    <p class="text-amber-200">${t.impedimento || 'Nenhum impedimento registrado'}</p>
-                                </div>
-                            </div>
-                            ${t.print_url ? `<div><p class="text-xs font-semibold text-zinc-400 mb-1">EVIDÊNCIA EM PRINT:</p><img src="${t.print_url}" class="max-h-48 rounded border border-zinc-800"></div>` : ''}
-                        </div>
-                        <button onclick="gerarPDF(${t.codigo})" class="w-full bg-zinc-800 hover:bg-zinc-700 text-white font-medium p-2.5 rounded-lg transition text-sm flex items-center justify-center gap-2 border border-zinc-700">📄 Exportar Relatório em PDF para Chefia</button>
-                    `;
-                });
-            } catch (err) {
-                alert('Erro ao buscar chamado: ' + err.message);
+            if (!t) {
+                container.innerHTML = '<div class="bg-zinc-900 p-4 rounded-xl text-center text-zinc-400 border border-zinc-800 text-sm">Nenhum chamado encontrado com este número.</div>';
+                return;
             }
+
+            container.innerHTML = `
+                <div id="pdf-content-${t.codigo}" class="bg-zinc-900 p-6 rounded-xl shadow-xl border border-zinc-800 space-y-4 text-sm text-zinc-200">
+                    <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
+                        <div>
+                            <span class="font-bold text-pink-500">Chamado Técnico #${t.codigo}</span>
+                            <h3 class="text-base font-semibold text-zinc-100">${t.projeto}</h3>
+                        </div>
+                        <span class="px-3 py-1 rounded-full text-xs font-semibold ${t.status === 'Concluído' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-amber-950 text-amber-400 border border-amber-800'}">${t.status}</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 text-xs sm:text-sm">
+                        <div><strong class="text-zinc-400">Cliente:</strong> ${t.cliente_nome}</div>
+                        <div><strong class="text-zinc-400">Endereço:</strong> ${t.endereco}</div>
+                        <div><strong class="text-zinc-400">Técnico:</strong> ${t.tecnico_nome} (${t.tecnico_telefone})</div>
+                        <div><strong class="text-zinc-400">Incidência:</strong> <span class="text-pink-400 font-semibold">${t.incidencia}</span></div>
+                        <div><strong class="text-zinc-400">Data Resolução:</strong> ${t.data_resolucao}</div>
+                    </div>
+                    <div class="bg-zinc-950 p-3 rounded border border-zinc-800">
+                        <p class="text-xs font-semibold text-zinc-400">DESCRIÇÃO INICIAL:</p>
+                        <p>${t.descricao_problema}</p>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="bg-emerald-950/40 p-3 rounded border border-emerald-900">
+                            <p class="text-xs font-semibold text-emerald-400">O QUE FOI RESOLVIDO:</p>
+                            <p class="text-emerald-200">${t.o_que_foi_resolvido}</p>
+                        </div>
+                        <div class="bg-amber-950/40 p-3 rounded border border-amber-900">
+                            <p class="text-xs font-semibold text-amber-400">IMPEDIMENTO:</p>
+                            <p class="text-amber-200">${t.impedimento}</p>
+                        </div>
+                    </div>
+                    ${t.print_url ? `<div><p class="text-xs font-semibold text-zinc-400 mb-1">EVIDÊNCIA EM PRINT:</p><img src="${t.print_url}" class="max-h-48 rounded border border-zinc-800"></div>` : ''}
+                </div>
+                <button onclick="gerarPDF(${t.codigo})" class="w-full bg-zinc-800 hover:bg-zinc-700 text-white font-medium p-2.5 rounded-lg transition text-sm flex items-center justify-center gap-2 border border-zinc-700">📄 Exportar Relatório em PDF para Chefia</button>
+            `;
         }
 
         function gerarPDF(codigo) {
@@ -323,54 +286,41 @@
             html2pdf().from(element).set(opt).save();
         }
 
-        async function carregarDashboard() {
-            try {
-                const response = await fetch(`${SUPABASE_URL}/rest/v1/tickets?select=incidencia`, {
-                    method: 'GET',
-                    headers: {
-                        'apikey': SUPABASE_ANON_KEY,
-                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+        function carregarDashboard() {
+            const chamados = getChamados();
+            const contagem = {};
+            chamados.forEach(item => {
+                const inc = item.incidencia || 'Não classificado';
+                contagem[inc] = (contagem[inc] || 0) + 1;
+            });
+
+            const labels = Object.keys(contagem);
+            const valores = Object.values(contagem);
+
+            if (chartInstance) chartInstance.destroy();
+
+            const ctx = document.getElementById('graficoIncidencias').getContext('2d');
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Número de Ocorrências',
+                        data: valores,
+                        backgroundColor: '#ec4899',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: '#a1a1aa' }, grid: { color: '#27272a' } },
+                        y: { ticks: { color: '#a1a1aa' }, grid: { color: '#27272a' } }
                     }
-                });
-                const data = await response.json();
-                if (!data) return;
-
-                const contagem = {};
-                data.forEach(item => {
-                    const inc = item.incidencia || 'Não classificado';
-                    contagem[inc] = (contagem[inc] || 0) + 1;
-                });
-
-                const labels = Object.keys(contagem);
-                const valores = Object.values(contagem);
-
-                if (chartInstance) chartInstance.destroy();
-
-                const ctx = document.getElementById('graficoIncidencias').getContext('2d');
-                chartInstance = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: 'Número de Ocorrências',
-                            data: valores,
-                            backgroundColor: '#ec4899',
-                            borderRadius: 6
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: {
-                            x: { ticks: { color: '#a1a1aa' }, grid: { color: '#27272a' } },
-                            y: { ticks: { color: '#a1a1aa' }, grid: { color: '#27272a' } }
-                        }
-                    }
-                });
-            } catch (err) {
-                console.error('Erro ao carregar dashboard:', err);
-            }
+                }
+            });
         }
     </script>
 </body>
