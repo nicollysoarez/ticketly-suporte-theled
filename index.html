@@ -9,8 +9,6 @@
     <script>
         tailwind.config = { darkMode: 'class' }
     </script>
-    <!-- Supabase JS Client -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- Biblioteca para gerar PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <!-- Chart.js para o Dashboard -->
@@ -112,17 +110,6 @@
                             <input type="file" id="arquivo_print" accept="image/*" class="w-full p-2 bg-zinc-950 border border-zinc-800 rounded-lg text-xs text-zinc-400 file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-purple-950 file:text-purple-300 hover:file:bg-purple-900">
                         </div>
                     </div>
-
-                    <!-- Bloco de Gravação de Áudio Opcional -->
-                    <div class="bg-zinc-950 p-3 rounded-lg border border-zinc-800 space-y-2">
-                        <label class="block text-xs font-semibold uppercase text-zinc-400">Evidência em Áudio - Relato do Técnico (Opcional)</label>
-                        <div class="flex items-center gap-2">
-                            <button type="button" onclick="iniciarGravacao()" id="btn-gravar" class="px-3 py-1.5 bg-red-600 text-white rounded text-xs font-medium hover:bg-red-700 transition">🔴 Gravar Áudio</button>
-                            <button type="button" onclick="pararGravacao()" id="btn-parar" disabled class="px-3 py-1.5 bg-zinc-800 text-zinc-500 rounded text-xs font-medium cursor-not-allowed">⏹️ Parar</button>
-                            <span id="status-gravacao" class="text-xs text-zinc-400">Opcional</span>
-                        </div>
-                        <audio id="audio-preview" controls class="w-full h-8 hidden mt-2"></audio>
-                    </div>
                 </div>
 
                 <button type="submit" id="btn-enviar" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 text-white font-medium p-2.5 rounded-lg transition text-sm shadow-lg shadow-purple-900/20">Cadastrar e Salvar Chamado</button>
@@ -153,11 +140,7 @@
     <script>
         const SUPABASE_URL = 'https://qwejshilmvijckxsyyc.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF3ZWpzaGlsbXZpamNreHFzeXljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI2NzkxNzIsImV4cCI6MjEwODI1NTE3Mn0.ZK5y9lvJgZEvlECF1tpBHFBMpFEfO3vdfWDmxGqNlt4';
-        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        let mediaRecorder;
-        let audioChunks = [];
-        let audioBlob = null;
         let chartInstance = null;
 
         function toggleTheme() {
@@ -182,39 +165,6 @@
             if (tab === 'dashboard') carregarDashboard();
         }
 
-        async function iniciarGravacao() {
-            audioChunks = [];
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream);
-                mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-                mediaRecorder.onstop = () => {
-                    audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                    const audioUrl = URL.createObjectURL(audioBlob);
-                    const audioElem = document.getElementById('audio-preview');
-                    audioElem.src = audioUrl;
-                    audioElem.classList.remove('hidden');
-                };
-                mediaRecorder.start();
-                document.getElementById('btn-gravar').disabled = true;
-                document.getElementById('btn-gravar').className = 'px-3 py-1.5 bg-zinc-800 text-zinc-500 rounded text-xs cursor-not-allowed';
-                document.getElementById('btn-parar').disabled = false;
-                document.getElementById('btn-parar').className = 'px-3 py-1.5 bg-green-600 text-white rounded text-xs font-medium hover:bg-green-700 transition';
-                document.getElementById('status-gravacao').innerText = 'Gravando áudio...';
-            } catch (err) {
-                alert('Erro ao acessar o microfone: ' + err.message);
-            }
-        }
-
-        function pararGravacao() {
-            mediaRecorder.stop();
-            document.getElementById('btn-gravar').disabled = false;
-            document.getElementById('btn-gravar').className = 'px-3 py-1.5 bg-red-600 text-white rounded text-xs font-medium hover:bg-red-700 transition';
-            document.getElementById('btn-parar').disabled = true;
-            document.getElementById('btn-parar').className = 'px-3 py-1.5 bg-zinc-800 text-zinc-500 rounded text-xs cursor-not-allowed';
-            document.getElementById('status-gravacao').innerText = 'Áudio gravado com sucesso!';
-        }
-
         async function criarChamado(e) {
             e.preventDefault();
             const btnEnviar = document.getElementById('btn-enviar');
@@ -223,25 +173,25 @@
 
             try {
                 let printUrl = null;
-                let audioUrl = null;
-
                 const fileInput = document.getElementById('arquivo_print');
+                
+                // Upload opcional via REST nativo
                 if (fileInput && fileInput.files.length > 0) {
                     const file = fileInput.files[0];
                     const fileName = `print_${Date.now()}_${file.name}`;
-                    const { error: fileError } = await _supabase.storage.from('evidencias').upload(fileName, file);
-                    if (!fileError) {
-                        const { data: publicURL } = _supabase.storage.from('evidencias').getPublicUrl(fileName);
-                        printUrl = publicURL.publicUrl;
-                    }
-                }
+                    
+                    const uploadRes = await fetch(`${SUPABASE_URL}/storage/v1/object/evidencias/${fileName}`, {
+                        method: 'POST',
+                        headers: {
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                            'Content-Type': file.type
+                        },
+                        body: file
+                    });
 
-                if (audioBlob) {
-                    const audioName = `audio_${Date.now()}.webm`;
-                    const { error: audioError } = await _supabase.storage.from('evidencias').upload(audioName, audioBlob);
-                    if (!audioError) {
-                        const { data: publicURL } = _supabase.storage.from('evidencias').getPublicUrl(audioName);
-                        audioUrl = publicURL.publicUrl;
+                    if (uploadRes.ok) {
+                        printUrl = `${SUPABASE_URL}/storage/v1/object/public/evidencias/${fileName}`;
                     }
                 }
 
@@ -260,28 +210,38 @@
                     impedimento: document.getElementById('impedimento').value || null,
                     data_resolucao: dataRes ? dataRes : null,
                     status: resolvido ? 'Concluído' : 'Pendente',
-                    print_url: printUrl,
-                    audio_url: audioUrl
+                    print_url: printUrl
                 };
 
-                const { data, error } = await _supabase.from('tickets').insert([payload]).select();
+                // Inserção direta via REST API do Supabase (Elimina erros de SDK)
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/tickets`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=representation'
+                    },
+                    body: JSON.stringify(payload)
+                });
 
-                if (error) throw error;
+                if (!response.ok) {
+                    const errText = await response.text();
+                    throw new Error(errText || 'Erro ao comunicar com o servidor');
+                }
 
-                if (data && data.length > 0) {
-                    alert(`Chamado criado com sucesso! Código do Chamado: #${data[0].codigo}`);
+                const result = await response.json();
+
+                if (result && result.length > 0) {
+                    alert(`Chamado criado com sucesso! Código do Chamado: #${result[0].codigo}`);
                 } else {
                     alert('Chamado criado com sucesso!');
                 }
 
                 document.getElementById('form-chamado').reset();
-                const audioPreview = document.getElementById('audio-preview');
-                if (audioPreview) audioPreview.classList.add('hidden');
-                audioBlob = null;
-                document.getElementById('status-gravacao').innerText = 'Opcional';
 
             } catch (err) {
-                alert('Erro ao salvar o chamado: ' + (err.message || JSON.stringify(err)));
+                alert('Erro ao salvar o chamado: ' + err.message);
             } finally {
                 btnEnviar.innerText = 'Cadastrar e Salvar Chamado';
                 btnEnviar.disabled = false;
@@ -292,52 +252,63 @@
             const codigo = document.getElementById('busca_codigo').value;
             if (!codigo) return;
 
-            const { data, error } = await _supabase.from('tickets').select('*').eq('codigo', codigo);
-            const container = document.getElementById('resultado-busca');
-            container.innerHTML = '';
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/tickets?codigo=eq.${codigo}`, {
+                    method: 'GET',
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    }
+                });
 
-            if (error || !data || data.length === 0) {
-                container.innerHTML = '<div class="bg-zinc-900 p-4 rounded-xl text-center text-zinc-400 border border-zinc-800 text-sm">Nenhum chamado encontrado com este número.</div>';
-                return;
+                const data = await response.json();
+                const container = document.getElementById('resultado-busca');
+                container.innerHTML = '';
+
+                if (!data || data.length === 0) {
+                    container.innerHTML = '<div class="bg-zinc-900 p-4 rounded-xl text-center text-zinc-400 border border-zinc-800 text-sm">Nenhum chamado encontrado com este número.</div>';
+                    return;
+                }
+
+                data.forEach(t => {
+                    container.innerHTML += `
+                        <div id="pdf-content-${t.codigo}" class="bg-zinc-900 p-6 rounded-xl shadow-xl border border-zinc-800 space-y-4 text-sm text-zinc-200">
+                            <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
+                                <div>
+                                    <span class="font-bold text-pink-500">Chamado Técnico #${t.codigo}</span>
+                                    <h3 class="text-base font-semibold text-zinc-100">${t.projeto}</h3>
+                                </div>
+                                <span class="px-3 py-1 rounded-full text-xs font-semibold ${t.status === 'Concluído' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-amber-950 text-amber-400 border border-amber-800'}">${t.status}</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3 text-xs sm:text-sm">
+                                <div><strong class="text-zinc-400">Cliente:</strong> ${t.cliente_nome}</div>
+                                <div><strong class="text-zinc-400">Endereço:</strong> ${t.endereco}</div>
+                                <div><strong class="text-zinc-400">Técnico:</strong> ${t.tecnico_nome} (${t.tecnico_telefone})</div>
+                                <div><strong class="text-zinc-400">Incidência:</strong> <span class="text-pink-400 font-semibold">${t.incidencia}</span></div>
+                                <div><strong class="text-zinc-400">Data Resolução:</strong> ${t.data_resolucao || 'Não informada'}</div>
+                            </div>
+                            <div class="bg-zinc-950 p-3 rounded border border-zinc-800">
+                                <p class="text-xs font-semibold text-zinc-400">DESCRIÇÃO INICIAL:</p>
+                                <p>${t.descricao_problema}</p>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div class="bg-emerald-950/40 p-3 rounded border border-emerald-900">
+                                    <p class="text-xs font-semibold text-emerald-400">O QUE FOI RESOLVIDO:</p>
+                                    <p class="text-emerald-200">${t.o_que_foi_resolvido || 'Pendente de solução'}</p>
+                                </div>
+                                <div class="bg-amber-950/40 p-3 rounded border border-amber-900">
+                                    <p class="text-xs font-semibold text-amber-400">IMPEDIMENTO (SE HOUVER):</p>
+                                    <p class="text-amber-200">${t.impedimento || 'Nenhum impedimento registrado'}</p>
+                                </div>
+                            </div>
+                            ${t.print_url ? `<div><p class="text-xs font-semibold text-zinc-400 mb-1">EVIDÊNCIA EM PRINT:</p><img src="${t.print_url}" class="max-h-48 rounded border border-zinc-800"></div>` : ''}
+                        </div>
+                        <button onclick="gerarPDF(${t.codigo})" class="w-full bg-zinc-800 hover:bg-zinc-700 text-white font-medium p-2.5 rounded-lg transition text-sm flex items-center justify-center gap-2 border border-zinc-700">📄 Exportar Relatório em PDF para Chefia</button>
+                    `;
+                });
+            } catch (err) {
+                alert('Erro ao buscar chamado: ' + err.message);
             }
-
-            data.forEach(t => {
-                container.innerHTML += `
-                    <div id="pdf-content-${t.codigo}" class="bg-zinc-900 p-6 rounded-xl shadow-xl border border-zinc-800 space-y-4 text-sm text-zinc-200">
-                        <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
-                            <div>
-                                <span class="font-bold text-pink-500">Chamado Técnico #${t.codigo}</span>
-                                <h3 class="text-base font-semibold text-zinc-100">${t.projeto}</h3>
-                            </div>
-                            <span class="px-3 py-1 rounded-full text-xs font-semibold ${t.status === 'Concluído' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-amber-950 text-amber-400 border border-amber-800'}">${t.status}</span>
-                        </div>
-                        <div class="grid grid-cols-2 gap-3 text-xs sm:text-sm">
-                            <div><strong class="text-zinc-400">Cliente:</strong> ${t.cliente_nome}</div>
-                            <div><strong class="text-zinc-400">Endereço:</strong> ${t.endereco}</div>
-                            <div><strong class="text-zinc-400">Técnico:</strong> ${t.tecnico_nome} (${t.tecnico_telefone})</div>
-                            <div><strong class="text-zinc-400">Incidência:</strong> <span class="text-pink-400 font-semibold">${t.incidencia}</span></div>
-                            <div><strong class="text-zinc-400">Data Resolução:</strong> ${t.data_resolucao || 'Não informada'}</div>
-                        </div>
-                        <div class="bg-zinc-950 p-3 rounded border border-zinc-800">
-                            <p class="text-xs font-semibold text-zinc-400">DESCRIÇÃO INICIAL:</p>
-                            <p>${t.descricao_problema}</p>
-                        </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div class="bg-emerald-950/40 p-3 rounded border border-emerald-900">
-                                <p class="text-xs font-semibold text-emerald-400">O QUE FOI RESOLVIDO:</p>
-                                <p class="text-emerald-200">${t.o_que_foi_resolvido || 'Pendente de solução'}</p>
-                            </div>
-                            <div class="bg-amber-950/40 p-3 rounded border border-amber-900">
-                                <p class="text-xs font-semibold text-amber-400">IMPEDIMENTO (SE HOUVER):</p>
-                                <p class="text-amber-200">${t.impedimento || 'Nenhum impedimento registrado'}</p>
-                            </div>
-                        </div>
-                        ${t.print_url ? `<div><p class="text-xs font-semibold text-zinc-400 mb-1">EVIDÊNCIA EM PRINT:</p><img src="${t.print_url}" class="max-h-48 rounded border border-zinc-800"></div>` : ''}
-                        ${t.audio_url ? `<div><p class="text-xs font-semibold text-zinc-400 mb-1">ÁUDIO DO TÉCNICO:</p><audio controls src="${t.audio_url}" class="w-full h-8"></audio></div>` : ''}
-                    </div>
-                    <button onclick="gerarPDF(${t.codigo})" class="w-full bg-zinc-800 hover:bg-zinc-700 text-white font-medium p-2.5 rounded-lg transition text-sm flex items-center justify-center gap-2 border border-zinc-700">📄 Exportar Relatório em PDF para Chefia</button>
-                `;
-            });
         }
 
         function gerarPDF(codigo) {
@@ -353,42 +324,53 @@
         }
 
         async function carregarDashboard() {
-            const { data, error } = await _supabase.from('tickets').select('incidencia');
-            if (error) return;
-
-            const contagem = {};
-            data.forEach(item => {
-                const inc = item.incidencia || 'Não classificado';
-                contagem[inc] = (contagem[inc] || 0) + 1;
-            });
-
-            const labels = Object.keys(contagem);
-            const valores = Object.values(contagem);
-
-            if (chartInstance) chartInstance.destroy();
-
-            const ctx = document.getElementById('graficoIncidencias').getContext('2d');
-            chartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Número de Ocorrências',
-                        data: valores,
-                        backgroundColor: '#ec4899',
-                        borderRadius: 6
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        x: { ticks: { color: '#a1a1aa' }, grid: { color: '#27272a' } },
-                        y: { ticks: { color: '#a1a1aa' }, grid: { color: '#27272a' } }
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/tickets?select=incidencia`, {
+                    method: 'GET',
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
                     }
-                }
-            });
+                });
+                const data = await response.json();
+                if (!data) return;
+
+                const contagem = {};
+                data.forEach(item => {
+                    const inc = item.incidencia || 'Não classificado';
+                    contagem[inc] = (contagem[inc] || 0) + 1;
+                });
+
+                const labels = Object.keys(contagem);
+                const valores = Object.values(contagem);
+
+                if (chartInstance) chartInstance.destroy();
+
+                const ctx = document.getElementById('graficoIncidencias').getContext('2d');
+                chartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Número de Ocorrências',
+                            data: valores,
+                            backgroundColor: '#ec4899',
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { ticks: { color: '#a1a1aa' }, grid: { color: '#27272a' } },
+                            y: { ticks: { color: '#a1a1aa' }, grid: { color: '#27272a' } }
+                        }
+                    }
+                });
+            } catch (err) {
+                console.error('Erro ao carregar dashboard:', err);
+            }
         }
     </script>
 </body>
