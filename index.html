@@ -115,18 +115,18 @@
                             <input type="date" id="data_resolucao" class="w-full p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-zinc-100 focus:ring-2 focus:ring-purple-500 outline-none">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold uppercase text-zinc-400 mb-1">Anexar Print / Foto de Evidência</label>
+                            <label class="block text-xs font-semibold uppercase text-zinc-400 mb-1">Anexar Print / Foto de Evidência (Opcional)</label>
                             <input type="file" id="arquivo_print" accept="image/*" class="w-full p-2 bg-zinc-950 border border-zinc-800 rounded-lg text-xs text-zinc-400 file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-purple-950 file:text-purple-300 hover:file:bg-purple-900">
                         </div>
                     </div>
 
-                    <!-- Bloco de Gravação de Áudio -->
+                    <!-- Bloco de Gravação de Áudio Opcional -->
                     <div class="bg-zinc-950 p-3 rounded-lg border border-zinc-800 space-y-2">
-                        <label class="block text-xs font-semibold uppercase text-zinc-400">Evidência em Áudio (Relato do Técnico)</label>
+                        <label class="block text-xs font-semibold uppercase text-zinc-400">Evidência em Áudio - Relato do Técnico (Opcional)</label>
                         <div class="flex items-center gap-2">
                             <button type="button" onclick="iniciarGravacao()" id="btn-gravar" class="px-3 py-1.5 bg-red-600 text-white rounded text-xs font-medium hover:bg-red-700 transition">🔴 Gravar Áudio</button>
                             <button type="button" onclick="pararGravacao()" id="btn-parar" disabled class="px-3 py-1.5 bg-zinc-800 text-zinc-500 rounded text-xs font-medium cursor-not-allowed">⏹️ Parar</button>
-                            <span id="status-gravacao" class="text-xs text-zinc-400">Pronto para gravar</span>
+                            <span id="status-gravacao" class="text-xs text-zinc-400">Opcional</span>
                         </div>
                         <audio id="audio-preview" controls class="w-full h-8 hidden mt-2"></audio>
                     </div>
@@ -192,7 +192,7 @@
             if (tab === 'dashboard') carregarDashboard();
         }
 
-        // Gravação de Áudio
+        // Gravação de Áudio Opcional
         async function iniciarGravacao() {
             audioChunks = [];
             try {
@@ -228,58 +228,70 @@
 
         async function criarChamado(e) {
             e.preventDefault();
-            document.getElementById('btn-enviar').innerText = 'Salvando evidências...';
+            const btnEnviar = document.getElementById('btn-enviar');
+            btnEnviar.innerText = 'Salvando chamado...';
+            btnEnviar.disabled = true;
 
-            let printUrl = null;
-            let audioUrl = null;
+            try {
+                let printUrl = null;
+                let audioUrl = null;
 
-            const fileInput = document.getElementById('arquivo_print');
-            if (fileInput.files.length > 0) {
-                const file = fileInput.files[0];
-                const fileName = `print_${Date.now()}_${file.name}`;
-                const { data: fileData, error: fileError } = await _supabase.storage.from('evidencias').upload(fileName, file);
-                if (!fileError) {
-                    const { data: publicURL } = _supabase.storage.from('evidencias').getPublicUrl(fileName);
-                    printUrl = publicURL.publicUrl;
+                // Upload de Print (se houver)
+                const fileInput = document.getElementById('arquivo_print');
+                if (fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    const fileName = `print_${Date.now()}_${file.name}`;
+                    const { error: fileError } = await _supabase.storage.from('evidencias').upload(fileName, file);
+                    if (!fileError) {
+                        const { data: publicURL } = _supabase.storage.from('evidencias').getPublicUrl(fileName);
+                        printUrl = publicURL.publicUrl;
+                    }
                 }
-            }
 
-            if (audioBlob) {
-                const audioName = `audio_${Date.now()}.webm`;
-                const { data: audioData, error: audioError } = await _supabase.storage.from('evidencias').upload(audioName, audioBlob);
-                if (!audioError) {
-                    const { data: publicURL } = _supabase.storage.from('evidencias').getPublicUrl(audioName);
-                    audioUrl = publicURL.publicUrl;
+                // Upload de Áudio (se houver)
+                if (audioBlob) {
+                    const audioName = `audio_${Date.now()}.webm`;
+                    const { error: audioError } = await _supabase.storage.from('evidencias').upload(audioName, audioBlob);
+                    if (!audioError) {
+                        const { data: publicURL } = _supabase.storage.from('evidencias').getPublicUrl(audioName);
+                        audioUrl = publicURL.publicUrl;
+                    }
                 }
-            }
 
-            const resolvido = document.getElementById('o_que_foi_resolvido').value;
-            const payload = {
-                cliente_nome: document.getElementById('cliente').value,
-                projeto: document.getElementById('projeto').value,
-                endereco: document.getElementById('endereco').value,
-                tecnico_nome: document.getElementById('tecnico_nome').value,
-                tecnico_telefone: document.getElementById('tecnico_telefone').value,
-                incidencia: document.getElementById('incidencia').value,
-                descricao_problema: document.getElementById('descricao').value,
-                o_que_foi_resolvido: resolvido || null,
-                impedimento: document.getElementById('impedimento').value || null,
-                data_resolucao: document.getElementById('data_resolucao').value || null,
-                status: resolvido ? 'Concluído' : 'Pendente',
-                print_url: printUrl,
-                audio_url: audioUrl
-            };
+                const resolvido = document.getElementById('o_que_foi_resolvido').value;
+                const payload = {
+                    cliente_nome: document.getElementById('cliente').value,
+                    projeto: document.getElementById('projeto').value,
+                    endereco: document.getElementById('endereco').value,
+                    tecnico_nome: document.getElementById('tecnico_nome').value,
+                    tecnico_telefone: document.getElementById('tecnico_telefone').value,
+                    incidencia: document.getElementById('incidencia').value,
+                    descricao_problema: document.getElementById('descricao').value,
+                    o_que_foi_resolvido: resolvido || null,
+                    impedimento: document.getElementById('impedimento').value || null,
+                    data_resolucao: document.getElementById('data_resolucao').value || null,
+                    status: resolvido ? 'Concluído' : 'Pendente',
+                    print_url: printUrl,
+                    audio_url: audioUrl
+                };
 
-            const { data, error } = await _supabase.from('tickets').insert([payload]).select();
+                const { data, error } = await _supabase.from('tickets').insert([payload]).select();
 
-            document.getElementById('btn-enviar').innerText = 'Cadastrar e Salvar Chamado';
-            if (error) {
-                alert('Erro ao salvar: ' + error.message);
-            } else {
-                alert(`Chamado criado com sucesso! Código: #${data[0].codigo}`);
+                if (error) {
+                    throw error;
+                }
+
+                alert(`Chamado criado com sucesso! Código do Chamado: #${data[0].codigo}`);
                 document.getElementById('form-chamado').reset();
                 document.getElementById('audio-preview').classList.add('hidden');
                 audioBlob = null;
+                document.getElementById('status-gravacao').innerText = 'Opcional';
+
+            } catch (err) {
+                alert('Erro ao salvar o chamado: ' + (err.message || JSON.stringify(err)));
+            } finally {
+                btnEnviar.innerText = 'Cadastrar e Salvar Chamado';
+                btnEnviar.disabled = false;
             }
         }
 
@@ -291,8 +303,8 @@
             const container = document.getElementById('resultado-busca');
             container.innerHTML = '';
 
-            if (error || data.length === 0) {
-                container.innerHTML = '<div class="bg-zinc-900 p-4 rounded-xl text-center text-zinc-400 border border-zinc-800 text-sm">Nenhum chamado encontrado.</div>';
+            if (error || !data || data.length === 0) {
+                container.innerHTML = '<div class="bg-zinc-900 p-4 rounded-xl text-center text-zinc-400 border border-zinc-800 text-sm">Nenhum chamado encontrado com este número.</div>';
                 return;
             }
 
